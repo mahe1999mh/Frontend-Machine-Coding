@@ -6,6 +6,9 @@ export function Autocomplete() {
   const [inputSearch, setInputSearch] = useState("");
   const [hideRecipes, setHideRecipes] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [cash, setCash] = useState({});
+
+  console.log(cash);
 
   const feachApi = async () => {
     const data = await fetch(
@@ -13,6 +16,7 @@ export function Autocomplete() {
     );
     const json = await data.json();
     setRecipes(json?.recipes);
+    setCash(prev => ({ ...prev, [inputSearch]: json?.recipes }));
   };
 
   const handleSearch = e => {
@@ -20,8 +24,15 @@ export function Autocomplete() {
   };
 
   useEffect(() => {
+    if (cash[inputSearch]) {
+      setRecipes(cash[inputSearch]);
+      console.log("cash return");
+      return;
+    }
+
     const input = setTimeout(() => {
       feachApi();
+      console.log("API Call");
     }, 300);
 
     return () => {
@@ -39,6 +50,7 @@ export function Autocomplete() {
 
     if (e.key == "Enter" && selectedIndex != -1) {
       setInputSearch(recipes[selectedIndex].name);
+      setHideRecipes(false);
     }
   };
 
@@ -51,11 +63,11 @@ export function Autocomplete() {
         value={inputSearch}
         onChange={handleSearch}
         onFocus={() => setHideRecipes(true)}
-        onBlur={() => setTimeout(() => setHideRecipes(false), 200)}
+        onBlur={() => setTimeout(() => setHideRecipes(false), 300)}
         onKeyDown={handleKeyDow}
       />
 
-      {hideRecipes && (
+      {hideRecipes && inputSearch.length > 0 && (
         <div
           style={{
             height: "200px",
@@ -65,8 +77,12 @@ export function Autocomplete() {
         >
           {recipes?.map((li, i) => (
             <div
+              key={li.id}
               className={`dropdown-item ${selectedIndex == i ? "active" : ""}`}
-              onClick={() => setInputSearch(li?.name)}
+              onClick={() => {
+                setInputSearch(li?.name);
+                setHideRecipes(false);
+              }}
             >
               {li?.name}
             </div>
